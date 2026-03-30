@@ -98,6 +98,4 @@ python3 export_detection_images.py
 eval/outputs
 ```
 
-## Publish Notes
 
-当前仓库已经去掉了 ROS 代码、实时推理脚本和历史训练产物，适合单独初始化为一个公开 GitHub 仓库。
