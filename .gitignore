@@ -1,0 +1,11 @@
+runs/
+outputs/
+split/
+eval/outputs/
+__pycache__/
+*.pyc
+.DS_Store
+.venv/
+venv/
+env/
+.pytest_cache/
