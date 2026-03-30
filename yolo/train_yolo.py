@@ -1,7 +1,10 @@
 from argparse import ArgumentParser
 from pathlib import Path
+import shutil
 from tempfile import NamedTemporaryFile
 
+import numpy as np
+import torch
 from ultralytics import YOLO
 import yaml
 
@@ -73,6 +76,49 @@ def prepare_data_yaml(data_yaml: Path) -> Path:
         return Path(f.name)
 
 
+def sanitize_checkpoint_value(value):
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    if isinstance(value, dict):
+        return {k: sanitize_checkpoint_value(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [sanitize_checkpoint_value(v) for v in value]
+    if isinstance(value, tuple):
+        return tuple(sanitize_checkpoint_value(v) for v in value)
+    return value
+
+
+def resave_checkpoint_compatible(ckpt_path: Path) -> None:
+    ckpt = torch.load(str(ckpt_path), map_location="cpu", weights_only=False)
+    ckpt = sanitize_checkpoint_value(ckpt)
+    torch.save(
+        ckpt,
+        str(ckpt_path),
+        pickle_protocol=4,
+        _use_new_zipfile_serialization=False,
+    )
+    print(f"Re-saved checkpoint in compatibility format: {ckpt_path}")
+
+
+def rename_best_checkpoint(save_dir: Path) -> None:
+    weights_dir = save_dir / "weights"
+    best_ckpt = weights_dir / "best.pt"
+    yolo_best_ckpt = weights_dir / "yolo_best.pt"
+
+    if not best_ckpt.exists():
+        print(f"[WARN] best checkpoint not found: {best_ckpt}")
+        return
+
+    if yolo_best_ckpt.exists():
+        yolo_best_ckpt.unlink()
+
+    shutil.move(str(best_ckpt), str(yolo_best_ckpt))
+    resave_checkpoint_compatible(yolo_best_ckpt)
+    print(f"Renamed best checkpoint to: {yolo_best_ckpt}")
+
+
 def main():
     args = parse_args()
 
@@ -116,6 +162,9 @@ def main():
         mixup=args.mixup,
         copy_paste=args.copy_paste,
     )
+
+    save_dir = Path(model.trainer.save_dir)
+    rename_best_checkpoint(save_dir)
 
 
 if __name__ == "__main__":

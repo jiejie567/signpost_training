@@ -231,6 +231,19 @@ def build_device():
     return torch.device("cpu")
 
 
+def save_state_dict_compatible(state_dict, path: Path):
+    """
+    Save with legacy torch serialization for better compatibility with older
+    Python/PyTorch environments.
+    """
+    torch.save(
+        state_dict,
+        str(path),
+        pickle_protocol=4,
+        _use_new_zipfile_serialization=False,
+    )
+
+
 def make_weighted_sampler(dataset):
     """类别均衡采样器，应对样本不均衡 (S2=54 vs S5=106)。"""
     label_counts = {}
@@ -486,7 +499,7 @@ def main():
         # Save best
         if val_acc > best_val_acc:
             best_val_acc = val_acc
-            torch.save(model.state_dict(), str(model_path))
+            save_state_dict_compatible(model.state_dict(), model_path)
             patience_counter = 0
         else:
             patience_counter += 1

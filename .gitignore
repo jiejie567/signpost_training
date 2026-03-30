@@ -26,4 +26,4 @@ yolo/runs/
 yolo/runs/**
 !yolo/runs/**/
 !yolo/runs/**/weights/
-!yolo/runs/**/weights/best.pt
+!yolo/runs/**/weights/yolo_best.pt

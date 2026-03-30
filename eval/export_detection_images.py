@@ -30,7 +30,7 @@ def parse_args():
     parser.add_argument(
         "--yolo-weights",
         type=str,
-        default=str((SCRIPT_DIR.parent / "yolo" / "runs" / "train" / "weights" / "best.pt").resolve()),
+        default=str((SCRIPT_DIR.parent / "yolo" / "runs" / "train" / "weights" / "yolo_best.pt").resolve()),
         help="YOLO weights path",
     )
     parser.add_argument(

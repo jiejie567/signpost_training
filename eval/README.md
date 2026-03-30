@@ -19,7 +19,7 @@
 默认会读取：
 
 - `../yolo/dataset/images/val`
-- `../yolo/runs/train/weights/best.pt`
+- `../yolo/runs/train/weights/yolo_best.pt`
 - `../cnn/outputs/signpost_cnn_best.pth`
 
 输出到：
