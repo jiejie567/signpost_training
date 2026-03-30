@@ -1,7 +1,9 @@
 from argparse import ArgumentParser
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 from ultralytics import YOLO
+import yaml
 
 
 def parse_args():
@@ -51,6 +53,26 @@ def resolve_from_script(path_value: str) -> Path:
     return Path(__file__).resolve().parent / candidate
 
 
+def prepare_data_yaml(data_yaml: Path) -> Path:
+    """
+    Rewrite the dataset yaml with an absolute `path` so Ultralytics resolves
+    train/val directories correctly regardless of the current working directory.
+    """
+    with data_yaml.open("r", encoding="utf-8") as f:
+        data_cfg = yaml.safe_load(f) or {}
+
+    base_path = data_cfg.get("path", ".")
+    base_path = Path(base_path)
+    if not base_path.is_absolute():
+        base_path = (data_yaml.parent / base_path).resolve()
+
+    data_cfg["path"] = str(base_path)
+
+    with NamedTemporaryFile("w", suffix=".yaml", prefix="signpost_data_", delete=False, encoding="utf-8") as f:
+        yaml.safe_dump(data_cfg, f, sort_keys=False, allow_unicode=True)
+        return Path(f.name)
+
+
 def main():
     args = parse_args()
 
@@ -60,13 +82,16 @@ def main():
     if not data_yaml.exists():
         raise FileNotFoundError(f"dataset yaml not found: {data_yaml}")
 
+    resolved_data_yaml = prepare_data_yaml(data_yaml)
+
     print(f"Using data: {data_yaml}")
+    print(f"Resolved data config: {resolved_data_yaml}")
     print(f"Using model: {args.model}")
     print(f"Saving to: {project_dir / args.name}")
 
     model = YOLO(args.model)
     model.train(
-        data=str(data_yaml),
+        data=str(resolved_data_yaml),
         epochs=args.epochs,
         imgsz=args.imgsz,
         batch=args.batch,

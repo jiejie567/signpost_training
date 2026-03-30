@@ -9,3 +9,21 @@ __pycache__/
 venv/
 env/
 .pytest_cache/
+
+# CNN training artifacts: keep only the best checkpoint
+cnn/split/
+!cnn/split/
+!cnn/split/**
+cnn/split_*/
+cnn/outputs_*/
+!cnn/outputs_*/
+cnn/outputs_*/**
+!cnn/outputs_*/signpost_cnn_best.pth
+
+# YOLO training artifacts: keep only the best checkpoint
+yolo/runs/
+!yolo/runs/
+yolo/runs/**
+!yolo/runs/**/
+!yolo/runs/**/weights/
+!yolo/runs/**/weights/best.pt
