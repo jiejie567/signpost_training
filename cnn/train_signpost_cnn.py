@@ -16,6 +16,7 @@ import random
 import shutil
 from pathlib import Path
 
+import cv2
 import numpy as np
 from PIL import Image
 
@@ -142,6 +143,14 @@ class SignpostDataset(Dataset):
 from torchvision import transforms
 
 
+class OtsuBinarize:
+    """Otsu 自适应二值化，输入输出均为灰度 PIL Image。"""
+    def __call__(self, img):
+        arr = np.array(img, dtype=np.uint8)
+        _, binary = cv2.threshold(arr, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        return Image.fromarray(binary)
+
+
 def get_train_transform():
     """
     训练时数据增强。
@@ -149,9 +158,9 @@ def get_train_transform():
     """
     return transforms.Compose([
         transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
+        OtsuBinarize(),
         transforms.RandomRotation(15),
         transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.85, 1.15)),
-        transforms.ColorJitter(brightness=0.3, contrast=0.3),
         transforms.ToTensor(),  # [0, 1], shape: 1×H×W for grayscale
     ])
 
@@ -159,6 +168,7 @@ def get_train_transform():
 def get_val_transform():
     return transforms.Compose([
         transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
+        OtsuBinarize(),
         transforms.ToTensor(),
     ])
 

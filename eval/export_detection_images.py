@@ -72,7 +72,8 @@ def build_device(device_arg: str) -> torch.device:
 def preprocess_gray(crop_bgr):
     crop_gray = cv2.cvtColor(crop_bgr, cv2.COLOR_BGR2GRAY)
     resized = cv2.resize(crop_gray, (IMAGE_SIZE, IMAGE_SIZE), interpolation=cv2.INTER_LINEAR)
-    tensor = torch.from_numpy(resized.astype("float32") / 255.0).unsqueeze(0).unsqueeze(0)
+    _, binary = cv2.threshold(resized, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    tensor = torch.from_numpy(binary.astype("float32") / 255.0).unsqueeze(0).unsqueeze(0)
     return tensor
 
 
