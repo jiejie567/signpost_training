@@ -5,6 +5,7 @@ from collections import Counter
 from pathlib import Path
 
 import cv2
+import numpy as np
 import torch
 from ultralytics import YOLO
 
@@ -92,6 +93,25 @@ def classify_crop(crop_bgr, model, device, threshold, use_half):
     return raw_name, confidence, raw_name
 
 
+def classify_crop_proto(crop_bgr, model, device, prototypes, ood_threshold, use_half):
+    """Prototype 距离分类：输入特征离所有类中心都太远则判为 unknown。"""
+    tensor = preprocess_gray(crop_bgr).to(device)
+    if use_half:
+        tensor = tensor.half()
+
+    with torch.inference_mode():
+        feat = model.extract_features(tensor).float().cpu().numpy()[0]  # (2048,)
+
+    dists = np.linalg.norm(prototypes - feat, axis=1)  # (num_classes,)
+    pred_idx = int(dists.argmin())
+    min_dist = float(dists[pred_idx])
+    raw_name = CLASS_NAMES[pred_idx]
+
+    if min_dist > ood_threshold:
+        return "unknown", min_dist, raw_name
+    return raw_name, min_dist, raw_name
+
+
 def draw_label(image, text, origin, color, font_scale=0.7, thickness=1):
     x, y = origin
     font = cv2.FONT_HERSHEY_SIMPLEX
@@ -144,13 +164,22 @@ def main():
 
     cnn_model = None
     cnn_enabled = cnn_weights.exists()
+    prototypes = None
+    ood_threshold = None
     if cnn_enabled:
         cnn_model = SignpostCNN(num_classes=len(CLASS_NAMES)).to(device)
-        state_dict = torch.load(str(cnn_weights), map_location=device)
+        state_dict = torch.load(str(cnn_weights), map_location=device, weights_only=False)
         cnn_model.load_state_dict(state_dict)
         if use_half:
             cnn_model.half()
         cnn_model.eval()
+
+        proto_path = Path(args.cnn_weights).parent / "prototypes.npz"
+        if proto_path.exists():
+            data = np.load(str(proto_path), allow_pickle=True)
+            prototypes = data["prototypes"].astype(np.float32)
+            ood_threshold = float(data["threshold"])
+            print(f"[INFO] Loaded prototypes from {proto_path}, OOD threshold={ood_threshold:.4f}")
 
     total_detections = 0
     saved_images = 0
@@ -194,13 +223,14 @@ def main():
                 if cnn_model is not None:
                     crop = image[y1:y2, x1:x2]
                     if crop.size != 0:
-                        cls_name, cls_conf, raw_cls_name = classify_crop(
-                            crop,
-                            cnn_model,
-                            device,
-                            args.cls_threshold,
-                            use_half,
-                        )
+                        if prototypes is not None:
+                            cls_name, cls_conf, raw_cls_name = classify_crop_proto(
+                                crop, cnn_model, device, prototypes, ood_threshold, use_half,
+                            )
+                        else:
+                            cls_name, cls_conf, raw_cls_name = classify_crop(
+                                crop, cnn_model, device, args.cls_threshold, use_half,
+                            )
                         raw_class_counts[raw_cls_name] += 1
                         if cls_name == "unknown":
                             color = (0, 165, 255)

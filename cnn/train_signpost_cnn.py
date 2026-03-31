@@ -78,6 +78,10 @@ class SignpostCNN(nn.Module):
             nn.Linear(256, num_classes),
         )
 
+    def extract_features(self, x):
+        """返回 features 层输出的展平向量 (B, 128*4*4=2048)，用于 prototype 距离计算。"""
+        return self.features(x).flatten(1)
+
     def forward(self, x):
         x = self.features(x)
         x = self.classifier(x)
