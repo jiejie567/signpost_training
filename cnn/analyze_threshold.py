@@ -24,7 +24,7 @@ from train_signpost_cnn import (
 def main():
     script_dir = Path(__file__).resolve().parent
     model_path = script_dir / "outputs" / "signpost_cnn_best.pth"
-    val_dir = script_dir / "split" / "val"
+    val_dir = script_dir / "dataset" / "val"
 
     if not model_path.exists():
         print(f"[ERROR] 模型不存在: {model_path}")
@@ -34,7 +34,7 @@ def main():
     device = torch.device("mps" if torch.backends.mps.is_available()
                           else "cuda" if torch.cuda.is_available() else "cpu")
     model = SignpostCNN(num_classes=len(CLASS_NAMES)).to(device)
-    model.load_state_dict(torch.load(str(model_path), map_location=device))
+    model.load_state_dict(torch.load(str(model_path), map_location=device, weights_only=False))
     model.eval()
     transform = get_val_transform()
 

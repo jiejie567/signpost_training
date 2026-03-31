@@ -1,28 +1,36 @@
-runs/
-outputs/
-split/
-eval/outputs/
+# Python
 __pycache__/
 *.pyc
+.pytest_cache/
+
+# OS
 .DS_Store
+
+# Virtual environments
 .venv/
 venv/
 env/
-.pytest_cache/
 
-# CNN training artifacts: keep only the best checkpoint
+# Claude Code
+.claude/
+
+# Pretrained base models (large, downloadable)
+yolo/*.pt
+
+# Dataset cache (auto-generated)
+yolo/dataset/labels/*.cache
+
+# CNN split dir (auto-generated from dataset/)
 cnn/split/
-!cnn/split/
-!cnn/split/**
-cnn/split_*/
-cnn/outputs_*/
-!cnn/outputs_*/
-cnn/outputs_*/**
-!cnn/outputs_*/signpost_cnn_best.pth
 
-# YOLO training artifacts: keep only the best checkpoint
-yolo/runs/
-!yolo/runs/
+# Eval outputs (generated at runtime)
+eval/outputs/
+
+# CNN outputs — keep only best checkpoint
+cnn/outputs/**
+!cnn/outputs/signpost_cnn_best.pth
+
+# YOLO run artifacts — keep only best checkpoint
 yolo/runs/**
 !yolo/runs/**/
 !yolo/runs/**/weights/

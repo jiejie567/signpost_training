@@ -42,7 +42,7 @@ def parse_args():
     parser.add_argument("--shear", type=float, default=2.0)
     parser.add_argument("--perspective", type=float, default=0.0)
     parser.add_argument("--flipud", type=float, default=0.0)
-    parser.add_argument("--fliplr", type=float, default=0.5)
+    parser.add_argument("--fliplr", type=float, default=0.0)
     parser.add_argument("--mosaic", type=float, default=0.5)
     parser.add_argument("--mixup", type=float, default=0.0)
     parser.add_argument("--copy-paste", type=float, default=0.0)

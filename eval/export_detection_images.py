@@ -180,8 +180,8 @@ def main():
                 x1, y1, x2, y2 = box.xyxy[0].tolist()
                 x1 = max(0, int(x1))
                 y1 = max(0, int(y1))
-                x2 = min(image.shape[1], int(x2))
-                y2 = min(image.shape[0], int(y2))
+                x2 = min(image.shape[1] - 1, int(x2))
+                y2 = min(image.shape[0] - 1, int(y2))
                 if x2 <= x1 or y2 <= y1:
                     continue
 

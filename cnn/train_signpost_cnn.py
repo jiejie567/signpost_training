@@ -419,7 +419,7 @@ def main():
             print(f"[ERROR] Model not found: {model_path}")
             return
         model = SignpostCNN(num_classes=len(CLASS_NAMES)).to(device)
-        model.load_state_dict(torch.load(str(model_path), map_location=device))
+        model.load_state_dict(torch.load(str(model_path), map_location=device, weights_only=False))
         cls_name, conf = predict_single(model, args.predict, device, args.threshold)
         print(f"Prediction: {cls_name}  (confidence={conf:.4f}, threshold={args.threshold})")
         return
@@ -451,7 +451,7 @@ def main():
         if not model_path.exists():
             print(f"[ERROR] Model not found: {model_path}")
             return
-        model.load_state_dict(torch.load(str(model_path), map_location=device))
+        model.load_state_dict(torch.load(str(model_path), map_location=device, weights_only=False))
         criterion = nn.CrossEntropyLoss()
         val_loss, val_acc = evaluate(model, val_loader, criterion, device)
         print(f"[EVAL] Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}")
@@ -515,7 +515,7 @@ def main():
     print(f"[INFO] Model saved to: {model_path}")
 
     # ── 最终评估 ──
-    model.load_state_dict(torch.load(str(model_path), map_location=device))
+    model.load_state_dict(torch.load(str(model_path), map_location=device, weights_only=False))
     save_results(model, val_loader, device, str(output_dir), CLASS_NAMES)
     print("[DONE]")
 
