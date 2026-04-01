@@ -26,10 +26,9 @@ cnn/split/
 # Eval outputs (generated at runtime)
 eval/outputs/
 
-# CNN outputs — keep only best checkpoint and prototypes
+# CNN outputs — keep only best checkpoint
 cnn/outputs/**
 !cnn/outputs/signpost_cnn_best.pth
-!cnn/outputs/prototypes.npz
 
 # YOLO run artifacts — keep only best checkpoint
 yolo/runs/**
