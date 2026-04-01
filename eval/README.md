@@ -1,41 +1,24 @@
 # eval
 
-干净版评估导出脚本，只负责：
+导出检测+分类可视化图，输出 JSON 统计。
 
-- 读取图片
-- 运行 `YOLO`
-- 可选运行 `CNN` 细分类
-- 导出带框结果图
-- 保存简单统计
+## 默认路径
 
-不做这些事情：
+| 参数 | 默认值 |
+|------|--------|
+| `--images-dir` | `../yolo/dataset/images/val` |
+| `--yolo-weights` | `../yolo/runs/train/weights/yolo_best.pt` |
+| `--cnn-weights` | `../cnn/outputs/signpost_cnn_best.pth` |
+| `--output-dir` | `eval/outputs` |
 
-- 不读取 GT
-- 不计算 precision / recall / mAP
-- 不导出历史样例目录
-
-## Usage
-
-默认会读取：
-
-- `../yolo/dataset/images/val`
-- `../yolo/runs/train/weights/yolo_best.pt`
-- `../cnn/outputs/signpost_cnn_best.pth`
-
-输出到：
-
-- `eval/outputs/images`
-- `eval/outputs/summary.json`
-- `eval/outputs/per_image.json`
-
-运行：
+## 运行
 
 ```bash
 cd eval
 python3 export_detection_images.py
 ```
 
-只导出 YOLO 检测框：
+只导出 YOLO 检测框（不做 CNN 分类）：
 
 ```bash
 python3 export_detection_images.py --cnn-weights /path/not_exists.pth
@@ -52,3 +35,13 @@ python3 export_detection_images.py --limit 20
 ```bash
 python3 export_detection_images.py --skip-empty
 ```
+
+## 输出
+
+- `eval/outputs/images/` — 带框结果图
+- `eval/outputs/summary.json` — 总体统计
+- `eval/outputs/per_image.json` — 每张图的检测详情
+
+## 分类逻辑
+
+CNN 预测结果为 `others` 或置信度低于 `--cls-threshold`（默认 0.7）时，标注为 `unknown`（橙色框），否则显示具体类别（绿色框）。
