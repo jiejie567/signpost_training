@@ -79,10 +79,6 @@ class SignpostCNN(nn.Module):
             nn.Linear(256, num_classes),
         )
 
-    def extract_features(self, x):
-        """返回 features 层输出的展平向量 (B, 128*4*4=2048)，用于 prototype 距离计算。"""
-        return self.features(x).flatten(1)
-
     def forward(self, x):
         x = self.features(x)
         x = self.classifier(x)
@@ -94,7 +90,7 @@ class SignpostCNN(nn.Module):
 # ──────────────────────────────────────────────
 
 # 8 个已知类别 (排序确保 index 稳定)
-CLASS_NAMES = ["S1", "S2", "S3", "S5", "S6", "S8", "S9", "S10"]
+CLASS_NAMES = ["S1", "S2", "S3", "S5", "S6", "S8", "S9", "S10", "others"]
 CLASS_TO_IDX = {name: idx for idx, name in enumerate(CLASS_NAMES)}
 
 IMAGE_SIZE = 128  # 输入尺寸

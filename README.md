@@ -30,6 +30,8 @@ pip install -r requirements.txt
 
 ## YOLO
 
+单类检测，只检测路牌位置（不区分类型）。
+
 目录：
 
 - `yolo/dataset/images/train`
@@ -53,22 +55,32 @@ yolo/runs/train
 
 ## CNN
 
+9 类分类器，输入为 YOLO 裁出的路牌区域（128×128 灰度 + Otsu 二值化）。
+
+| index | 类别 | 说明 |
+|-------|------|------|
+| 0 | S1 | |
+| 1 | S2 | |
+| 2 | S3 | |
+| 3 | S5 | |
+| 4 | S6 | |
+| 5 | S8 | |
+| 6 | S9 | |
+| 7 | S10 | |
+| 8 | others | 训练集以外的未知路牌类型 |
+
+推理时预测为 `others` 或 softmax 置信度低于阈值（默认 0.7）时，输出 `unknown`。
+
 目录：
 
-- `cnn/dataset/S1`
-- `cnn/dataset/S2`
-- `cnn/dataset/S3`
-- `cnn/dataset/S5`
-- `cnn/dataset/S6`
-- `cnn/dataset/S8`
-- `cnn/dataset/S9`
-- `cnn/dataset/S10`
+- `cnn/dataset/train/S1` ... `S10`, `others`
+- `cnn/dataset/val/S1` ... `S10`, `others`
 
 训练：
 
 ```bash
 cd cnn
-python3 train_signpost_cnn.py
+python3 train_signpost_cnn.py --split-dir dataset
 ```
 
 阈值分析：
@@ -80,12 +92,12 @@ python3 analyze_threshold.py
 默认输出到：
 
 ```text
-cnn/outputs
+cnn/outputs/signpost_cnn_best.pth
 ```
 
 ## Eval
 
-导出检测结果图：
+导出检测结果图（YOLO 检测框 + CNN 分类标注）：
 
 ```bash
 cd eval
@@ -95,7 +107,7 @@ python3 export_detection_images.py
 输出目录：
 
 ```text
-eval/outputs
+eval/outputs/images/
+eval/outputs/summary.json
+eval/outputs/per_image.json
 ```
-
-
