@@ -35,3 +35,9 @@ yolo/runs/**
 !yolo/runs/**/
 !yolo/runs/**/weights/
 !yolo/runs/**/weights/yolo_best.pt
+
+# Centralized exported checkpoints
+checkpoints/**
+!checkpoints/
+!checkpoints/*.pth
+!checkpoints/*.pt

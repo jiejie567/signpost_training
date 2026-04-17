@@ -17,6 +17,7 @@ pip install -r requirements.txt
 - `cnn/train_signpost_cnn.py`
 - `cnn/analyze_threshold.py`
 - `cnn/dataset/`
+- `checkpoints/`
 - `eval/export_detection_images.py`
 
 没有保留这些无关内容：
@@ -53,9 +54,15 @@ python3 train_yolo.py --device cpu
 yolo/runs/train
 ```
 
+当前整理出的最佳 YOLO checkpoint：
+
+```text
+checkpoints/yolo_best.pt
+```
+
 ## CNN
 
-9 类分类器，输入为 YOLO 裁出的路牌区域（128×128 灰度 + Otsu 二值化）。
+9 类分类器，输入为 YOLO 裁出的路牌区域（128×128 RGB）。
 
 | index | 类别 | 说明 |
 |-------|------|------|
@@ -93,6 +100,12 @@ python3 analyze_threshold.py
 
 ```text
 cnn/outputs/signpost_cnn_best.pth
+```
+
+当前整理出的最佳 CNN checkpoint：
+
+```text
+checkpoints/signpost_cnn_best.pth
 ```
 
 ## Eval
