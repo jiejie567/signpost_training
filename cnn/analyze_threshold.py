@@ -49,7 +49,7 @@ def main():
             if img_path.suffix.lower() not in {".jpg", ".jpeg", ".png"}:
                 continue
 
-            img = Image.open(img_path).convert("L")
+            img = Image.open(img_path).convert("RGB")
             img_tensor = transform(img).unsqueeze(0).to(device)
 
             with torch.no_grad():

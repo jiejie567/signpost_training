@@ -68,16 +68,19 @@ def build_device(device_arg: str) -> torch.device:
     return torch.device("cpu")
 
 
-def preprocess_gray(crop_bgr):
-    crop_gray = cv2.cvtColor(crop_bgr, cv2.COLOR_BGR2GRAY)
-    resized = cv2.resize(crop_gray, (IMAGE_SIZE, IMAGE_SIZE), interpolation=cv2.INTER_LINEAR)
-    _, binary = cv2.threshold(resized, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    tensor = torch.from_numpy(binary.astype("float32") / 255.0).unsqueeze(0).unsqueeze(0)
-    return tensor
+_NORM_MEAN = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
+_NORM_STD  = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
+
+def preprocess_rgb(crop_bgr):
+    crop_rgb = cv2.cvtColor(crop_bgr, cv2.COLOR_BGR2RGB)
+    resized = cv2.resize(crop_rgb, (IMAGE_SIZE, IMAGE_SIZE), interpolation=cv2.INTER_LINEAR)
+    tensor = torch.from_numpy(resized.astype("float32") / 255.0).permute(2, 0, 1)
+    tensor = (tensor - _NORM_MEAN) / _NORM_STD
+    return tensor.unsqueeze(0)
 
 
 def classify_crop(crop_bgr, model, device, threshold, use_half):
-    tensor = preprocess_gray(crop_bgr).to(device)
+    tensor = preprocess_rgb(crop_bgr).to(device)
     if use_half:
         tensor = tensor.half()
 

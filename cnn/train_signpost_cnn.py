@@ -1,7 +1,7 @@
 """
 Signpost CNN Classifier — 轻量自定义 CNN
 ========================================
-8 类 sign (S1, S2, S3, S5, S6, S8, S9, S10) + 置信度拒识 unknown
+7 类 sign (S1, S2, S3, S5, S6, S8, S10) + others + 置信度拒识 unknown
 
 用法:
     python train_signpost_cnn.py                        # 训练
@@ -16,7 +16,6 @@ import random
 import shutil
 from pathlib import Path
 
-import cv2
 import numpy as np
 from PIL import Image
 
@@ -46,8 +45,8 @@ class SignpostCNN(nn.Module):
         super().__init__()
 
         self.features = nn.Sequential(
-            # Block 1: 1×64×64 → 32×32×32
-            nn.Conv2d(1, 32, kernel_size=3, padding=1),
+            # Block 1: 3×128×128 → 32×64×64
+            nn.Conv2d(3, 32, kernel_size=3, padding=1),
             nn.BatchNorm2d(32),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(2),
@@ -90,7 +89,7 @@ class SignpostCNN(nn.Module):
 # ──────────────────────────────────────────────
 
 # 8 个已知类别 (排序确保 index 稳定)
-CLASS_NAMES = ["S1", "S2", "S3", "S5", "S6", "S8", "S9", "S10", "others"]
+CLASS_NAMES = ["S1", "S2", "S3", "S5", "S6", "S8", "S10", "others"]
 CLASS_TO_IDX = {name: idx for idx, name in enumerate(CLASS_NAMES)}
 
 IMAGE_SIZE = 128  # 输入尺寸
@@ -121,13 +120,13 @@ class SignpostDataset(Dataset):
 
     def __getitem__(self, idx):
         path, label = self.samples[idx]
-        img = Image.open(path).convert("L")  # 转灰度
+        img = Image.open(path).convert("RGB")
         img = img.resize((IMAGE_SIZE, IMAGE_SIZE), Image.BILINEAR)
 
         if self.transform:
             img = self.transform(img)
         else:
-            img = torch.from_numpy(np.array(img, dtype=np.float32) / 255.0).unsqueeze(0)
+            img = torch.from_numpy(np.array(img, dtype=np.float32) / 255.0).permute(2, 0, 1)
 
         return img, label
 
@@ -139,14 +138,6 @@ class SignpostDataset(Dataset):
 from torchvision import transforms
 
 
-class OtsuBinarize:
-    """Otsu 自适应二值化，输入输出均为灰度 PIL Image。"""
-    def __call__(self, img):
-        arr = np.array(img, dtype=np.uint8)
-        _, binary = cv2.threshold(arr, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        return Image.fromarray(binary)
-
-
 def get_train_transform():
     """
     训练时数据增强。
@@ -154,18 +145,19 @@ def get_train_transform():
     """
     return transforms.Compose([
         transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
-        OtsuBinarize(),
         transforms.RandomRotation(15),
         transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.85, 1.15)),
-        transforms.ToTensor(),  # [0, 1], shape: 1×H×W for grayscale
+        transforms.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.2),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
 
 
 def get_val_transform():
     return transforms.Compose([
         transforms.Resize((IMAGE_SIZE, IMAGE_SIZE)),
-        OtsuBinarize(),
         transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
 
 
@@ -365,9 +357,9 @@ def predict_single(model, image_path: str, device, threshold: float = 0.7):
     如果 confidence < threshold，返回 ("unknown", confidence)。
     """
     model.eval()
-    img = Image.open(image_path).convert("L")
+    img = Image.open(image_path).convert("RGB")
     transform = get_val_transform()
-    img_tensor = transform(img).unsqueeze(0).to(device)  # 1×1×64×64
+    img_tensor = transform(img).unsqueeze(0).to(device)
 
     with torch.no_grad():
         logits = model(img_tensor)
